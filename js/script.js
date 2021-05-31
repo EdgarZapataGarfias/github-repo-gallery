@@ -1,6 +1,7 @@
 //html class = overview div
 const overview = document.querySelector(".overview");
 const username = "EdgarZapataGarfias";
+const repoList = document.querySelector(".repo-list");//unordered list for repos HTML
 
 const getUserData = async function(){
   //assign info fetched from api url to userInfo
@@ -36,4 +37,35 @@ const displayUserInfo = function(data){
     </div>
   `;
   overview.append(div);
+  gitRepos();
 };
+
+//async function to fetch repos
+const gitRepos = async function(){
+  //api url for user wanted
+  //looking for repos and sorting 100 repos visible per page
+  const fetchRepos = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=100`);
+  //interpret data with json() method
+  const repoData = await fetchRepos.json();
+
+  //console.log(repoData);
+  displayRepos(repoData);
+};
+
+//display info of each repo
+const displayRepos = function(repos){
+  //loop through repos array and do actions for each repo
+  for(const repo of repos){
+    //create listitem for each repo
+    const repoItem = document.createElement("li");
+    //add class repo to each repoItem
+    repoItem.classList.add(".repo");
+    //add heading3 for each repo name
+    repoItem.innerHTML = `<h3>${repo.name}</h3>`;
+    //add each repoItem to repoList
+    repoList.append(repoItem);
+
+    console.log(repoList);
+  }
+};
+
