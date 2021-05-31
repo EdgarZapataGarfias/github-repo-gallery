@@ -1,34 +1,24 @@
-//html class = overview div
 const overview = document.querySelector(".overview");
 const username = "EdgarZapataGarfias";
-const repoList = document.querySelector(".repo-list");//unordered list for repos HTML
-const reposSection = document.querySelector(".repos");//repos section from html //allReposContainer
-const repoDataSection = document.querySelector(".repo-data");//repo data section //include hide class
+const repoList = document.querySelector(".repo-list");
+const allReposContainer = document.querySelector(".repos");
+const repoData = document.querySelector(".repo-data");
+const viewReposButton = document.querySelector(".view-repos");
+const filterInput = document.querySelector(".filter-repos");
 
-const getUserData = async function(){
-  //assign info fetched from api url to userInfo
-  const userInfo = await fetch(`https://api.github.com/users/${username}`);//using username global variable for username
-  const data = await userInfo.json();//interpret info fetched
-  
-  console.log(data);
-  //need
-  //name//bio//location//public_repos
-
-  //call displayUserInfo function
+const gitUserInfo = async function () {
+  const userInfo = await fetch(`https://api.github.com/users/${username}`);
+  const data = await userInfo.json();
   displayUserInfo(data);
 };
-//call function to see data in console
-getUserData();
 
-//function to display userInfo
-const displayUserInfo = function(data){
-  //create new div
+gitUserInfo();
+
+const displayUserInfo = function (data) {
   const div = document.createElement("div");
-  //add class user-info to element
   div.classList.add("user-info");
-  //populate div content
-  div.innerHTML= `
-  <figure>
+  div.innerHTML = `
+    <figure>
       <img alt="user avatar" src=${data.avatar_url} />
     </figure>
     <div>
@@ -39,78 +29,83 @@ const displayUserInfo = function(data){
     </div>
   `;
   overview.append(div);
-  gitRepos();
+  gitRepos(username);
 };
 
-//async function to fetch repos
-const gitRepos = async function(){
-  //api url for user wanted
-  //looking for repos and sorting 100 repos visible per page
+const gitRepos = async function (username) {
   const fetchRepos = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=100`);
-  //interpret data with json() method
   const repoData = await fetchRepos.json();
-
-  //console.log(repoData);
   displayRepos(repoData);
 };
 
-//display info of each repo
-const displayRepos = function(repos){
-  //loop through repos array and do actions for each repo
-  for(const repo of repos){
-    //create listitem for each repo
+const displayRepos = function (repos) {
+  filterInput.classList.remove("hide");
+  for (const repo of repos) {
     const repoItem = document.createElement("li");
-    //add class repo to each repoItem
-    repoItem.classList.add(".repo");
-    //add heading3 for each repo name
+    repoItem.classList.add("repo");
     repoItem.innerHTML = `<h3>${repo.name}</h3>`;
-    //add each repoItem to repoList
     repoList.append(repoItem);
-
-    console.log(repoList);
   }
 };
 
-//eventListener for when repoList h3 title is clicked
-repoList.addEventListener("click", function(e){
-  //checks if event target matches h3
-  if(e.target.matches("h3")){
+repoList.addEventListener("click", function (e) {
+  if (e.target.matches("h3")) {
     const repoName = e.target.innerText;
-    console.log(repoName);
-    specificRepoData(repoName);
+    getRepoInfo(repoName);
   }
 });
 
-//getRepoInfo
-const specificRepoData = async function(repoName){
-  const specificRepoInfo = await fetch(`https://api.github.com/repos/${username}/${repoName}`);
-  //assign repo json response
-  const repoInfo = await specificRepoInfo.json();
-  console.log(repoInfo);
-  //fetch languages used in repo
+const getRepoInfo = async function (repoName) {
+  const fetchInfo = await fetch(`https://api.github.com/repos/${username}/${repoName}`);
+  const repoInfo = await fetchInfo.json();
+
+  // Grab languages
   const fetchLanguages = await fetch(repoInfo.languages_url);
   const languageData = await fetchLanguages.json();
-  //make a list of languages
+
+  // Make a list of languages
   const languages = [];
-  for(const language in languageData){
+  for (const language in languageData) {
     languages.push(language);
   }
 
-  //call displayRepoInfo
-  displayRepoInfo(repoInfo , languages)
+  displayRepoInfo(repoInfo, languages);
 };
 
-const displayRepoInfo = function(repoInfo, languages){
-  repoDataSection.innerHTML = "";
-  repoDataSection.classList.remove("hide");
-  reposSection.classList.add("hide");
+const displayRepoInfo = function (repoInfo, languages) {
+  viewReposButton.classList.remove("hide");
+  repoData.innerHTML = "";
+  repoData.classList.remove("hide");
+  allReposContainer.classList.add("hide");
   const div = document.createElement("div");
   div.innerHTML = `
-  <h3>Name: ${repoInfo.name}</h3>
-  <p>Description: ${repoInfo.description}</p>
-  <p>Default Branch: ${repoInfo.default_branch}</p>
-  <p>Languages: ${languages.join(", ")}</p>
-  <a class="visit" href="${repoInfo.html_url}" target="_blank" rel="noreferrer noopener">View Repo on GitHub!</a>
-`;
-  repoDataSection.append(div);
+    <h3>Name: ${repoInfo.name}</h3>
+    <p>Description: ${repoInfo.description}</p>
+    <p>Default Branch: ${repoInfo.default_branch}</p>
+    <p>Languages: ${languages.join(", ")}</p>
+    <a class="visit" href="${repoInfo.html_url}" target="_blank" rel="noreferrer noopener">View Repo on GitHub!</a>
+  `;
+  repoData.append(div);
 };
+
+viewReposButton.addEventListener("click", function () {
+  allReposContainer.classList.remove("hide");
+  repoData.classList.add("hide");
+  viewReposButton.classList.add("hide");
+});
+
+// // Dynamic search
+filterInput.addEventListener("input", function (e) {
+  const searchText = e.target.value;
+  const repos = document.querySelectorAll(".repo");
+  const searchLowerText = searchText.toLowerCase();
+
+  for (const repo of repos) {
+    const repoLowerText = repo.innerText.toLowerCase();
+    if (repoLowerText.includes(searchLowerText)) {
+      repo.classList.remove("hide");
+    } else {
+      repo.classList.add("hide");
+    }
+  }
+});
