@@ -2,6 +2,8 @@
 const overview = document.querySelector(".overview");
 const username = "EdgarZapataGarfias";
 const repoList = document.querySelector(".repo-list");//unordered list for repos HTML
+const reposSection = document.querySelector(".repos");//repos section from html //allReposContainer
+const repoDataSection = document.querySelector(".repo-data");//repo data section //include hide class
 
 const getUserData = async function(){
   //assign info fetched from api url to userInfo
@@ -69,3 +71,46 @@ const displayRepos = function(repos){
   }
 };
 
+//eventListener for when repoList h3 title is clicked
+repoList.addEventListener("click", function(e){
+  //checks if event target matches h3
+  if(e.target.matches("h3")){
+    const repoName = e.target.innerText;
+    console.log(repoName);
+    specificRepoData(repoName);
+  }
+});
+
+//getRepoInfo
+const specificRepoData = async function(repoName){
+  const specificRepoInfo = await fetch(`https://api.github.com/repos/${username}/${repoName}`);
+  //assign repo json response
+  const repoInfo = await specificRepoInfo.json();
+  console.log(repoInfo);
+  //fetch languages used in repo
+  const fetchLanguages = await fetch(repoInfo.languages_url);
+  const languageData = await fetchLanguages.json();
+  //make a list of languages
+  const languages = [];
+  for(const language in languageData){
+    languages.push(language);
+  }
+
+  //call displayRepoInfo
+  displayRepoInfo(repoInfo , languages)
+};
+
+const displayRepoInfo = function(repoInfo, languages){
+  repoDataSection.innerHTML = "";
+  repoDataSection.classList.remove("hide");
+  reposSection.classList.add("hide");
+  const div = document.createElement("div");
+  div.innerHTML = `
+  <h3>Name: ${repoInfo.name}</h3>
+  <p>Description: ${repoInfo.description}</p>
+  <p>Default Branch: ${repoInfo.default_branch}</p>
+  <p>Languages: ${languages.join(", ")}</p>
+  <a class="visit" href="${repoInfo.html_url}" target="_blank" rel="noreferrer noopener">View Repo on GitHub!</a>
+`;
+  repoDataSection.append(div);
+};
